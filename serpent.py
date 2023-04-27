@@ -41,7 +41,8 @@ except ImportError:
 
 import binascii
 import base64
-from datetime import datetime as dt
+# from datetime import datetime as dt
+import timeit
 import os
 
 def generate_random_string(size):
@@ -3014,24 +3015,33 @@ def padding(message):
     return message+((16-(len(message)%16))*" ")
 
 print 'serpent'
-message_size = 5344
+message_size = 50
+iterations = 10
+
+try:
+    if(sys.argv[1]):
+        message_size=int(sys.argv[1])
+    if(sys.argv[2]):
+        iterations = int(sys.argv[2])
+except:
+    print 'No size passed, using default...'
+
+
 print message_size, 'KB'
-plaintext = generate_random_string(message_size*1000)
+
+plaintext = generate_random_string(message_size * 1000)
 key = generate_random_string(32)
 
 # encryption
-start_time = dt.now()
-cipher_text = serpent_cbc_encrypt(key, plaintext)
-end_time = dt.now()
-time_elapsed = (start_time-end_time).microseconds / 1000
-print 'encryption time = ', time_elapsed, ' milliseconds'
+ciphertext=""
+def enc():
+    global ciphertext
+    ciphertext = serpent_cbc_encrypt(key, plaintext)
+
+print 'encryption time = ', timeit.timeit(enc, number=iterations) / iterations, ' seconds'
 
 # decryption
-start_time = dt.now()
-plaintext2 = serpent_cbc_decrypt(key,cipher_text)
-end_time = dt.now()
-time_elapsed = (start_time-end_time).microseconds / 1000
-print 'decryption time = ', time_elapsed, ' milliseconds'
+print 'decryption time = ', timeit.timeit(lambda: serpent_cbc_decrypt(key, ciphertext), number=iterations) / iterations, ' seconds'
 
-if (plaintext == plaintext2 and plaintext!=cipher_text):
-    print 'successful encryption and decryption'
+# if (plaintext == plaintext2 and plaintext!=cipher_text):
+    # print 'successful encryption and decryption'
