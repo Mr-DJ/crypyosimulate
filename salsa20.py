@@ -1,62 +1,33 @@
-import os
-import datetime
 from Crypto.Cipher import Salsa20
+from datetime import datetime as dt
+import os
 
-st = et = elapsed = 0
-
-def startWatch():
-    global st
-    st = datetime.datetime.now()
-
-def stopWatch():
-    global et
-    et = datetime.datetime.now()
-
-def getTimeMillis():
-    elapsed = et - st
-    return elapsed.total_seconds() * 1000
-
-# generate a random string of a given size in bytes
 def generate_random_string(size):
     return os.urandom(size)
 
-# check if plain text matches decrypted text
-def decryption_success(plaintext, decryptedtext):
-    return (plaintext == decryptedtext)
+print("Salsa 20")
+message_size = 5344
+print(message_size, 'KB')
+plaintext = generate_random_string(message_size*1000)
+secret = b'*Thirty-two byte (256 bits) key*'
+cipher = Salsa20.new(key=secret)
 
-# 1. create text
-# plaintext = b'I am sending the encrypted message.'
-plaintext = generate_random_string(45000)
-
-# get the start datetime
-startWatch()
-
-# 2. create a key
-key = b'*Thirty-two byte (256 bits) key*'
-
-# 3. encrypt the message by key
-cipher = Salsa20.new(key=key)
+start_time = dt.now()
 msg = cipher.nonce + cipher.encrypt(plaintext)
-msg_nonce = msg[:8]  # randomly generated number
+msg_nonce = msg[:8]
 ciphertext = msg[8:]
+end_time = dt.now()
+time_elapsed = (start_time-end_time).microseconds / 1000
 
-# get the end datetime
-stopWatch()
+print('encryption time = ', time_elapsed, ' milliseconds')
 
-# get execution time
-print('Encryption time:', getTimeMillis(), 'milliseconds')
-
-# print(plaintext)   receiver can see only after decoding ciphertext
-# print(cipher.nonce)   a byte string you must send to the receiver too to decrypt, cipher = Salsa20.new(key=key, nonce=msg_nonce)
-# print(ciphertext)   encoded ciphertext received by receiver
-
-startWatch()
-
-cipher = Salsa20.new(key=key, nonce=msg_nonce)
+cipher = Salsa20.new(key=secret, nonce=msg_nonce)
+start_time = dt.now()
 plaintext2 = cipher.decrypt(ciphertext)
+end_time = dt.now()
+time_elapsed = (start_time-end_time).microseconds / 1000
 
-stopWatch()
+print('decryption time = ', time_elapsed, ' milliseconds')
 
-print('Decryption time:', getTimeMillis(), 'milliseconds')
-
-print(decryption_success(plaintext, plaintext2))
+if (plaintext == plaintext2 and plaintext != ciphertext):
+    print('successful encryption and decryption')
